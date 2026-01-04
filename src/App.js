@@ -115,18 +115,30 @@ export default function App() {
         const item = schedule[key];
         stats[item.type] = (stats[item.type] || 0) + 1;
       }
-      const exportAsImage = async () => {
-    const element = document.getElementById('schedule-table');
-    if (!element) return;
-    const canvas = await html2canvas(element, { backgroundColor: '#000000', scale: 2 });
-    const image = canvas.toDataURL("image/png");
-    const link = document.createElement('a');
-    link.href = image;
-    link.download = 'my-schedule.png';
-    link.click();
-    });
     return stats;
   }, [schedule, currentDate]);
+  // --- 這裡才是正確的獨立位置 ---
+  const exportAsImage = async () => {
+    const element = document.getElementById('capture-area'); // 確保下方 HTML 有這個 ID
+    if (!element) {
+        alert("找不到截圖區域");
+        return;
+    }
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#000000',
+        scale: 3,
+        useCORS: true
+      });
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = '我的班表.png';
+      link.click();
+    } catch (err) {
+      console.error('匯出失敗:', err);
+    }
+  };
 
   const t = isDarkMode ? {
     bg: 'bg-slate-950', text: 'text-slate-100', textSub: 'text-slate-400', textMuted: 'text-slate-500',
@@ -373,7 +385,12 @@ export default function App() {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex items-center justify-center font-sans transition-colors duration-700`}>
       {/* 3. 在這裡加按鈕 */}
-      <button onClick={exportAsImage}>下載圖片</button>
+      <button 
+  onClick={exportAsImage} 
+  className="relative z-50 mb-4 px-4 py-2 bg-yellow-400 text-black font-bold rounded-lg"
+>
+  📸 下載圖片
+</button>
       {/* 4. 在這裡加 ID */}
       <div id="capture-area" className="max-w-[420px] mx-auto bg-slate-900">
          {/* ...你的課表內容... */}
