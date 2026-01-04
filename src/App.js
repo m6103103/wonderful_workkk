@@ -27,46 +27,36 @@ const OFF_SHIFT = {
 const DAYS_IN_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
 export default function App() {
+  const handleExportImage = async () => {
+    const element = document.getElementById('capture-area');
+    const toolbar = element?.querySelector('.z-30'); 
+    if (!element) return;
+    try {
+      if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
+      const canvas = await html2canvas(window.document.getElementById('capture-area'), {
+        useCORS: true,
+        scale: 3,
+      });
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `我的班表.png`;
+      link.click();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (toolbar) toolbar.style.setProperty('display', 'flex', 'important');
+    }
+  };
   const [step, setStep] = useState(0); 
   const [scheduleName, setScheduleName] = useState('');
   const [shifts, setShifts] = useState([
     { id: 'early', name: '日班', time: '07:00 - 15:00', themeIdx: 0 },
     { id: 'mid', name: '小夜', time: '15:00 - 23:00', themeIdx: 1 },
     { id: 'night', name: '大夜', time: '23:00 - 07:00', themeIdx: 2 },
-  ]);
-  const handleExportImage = async () => {
-    const handleExportImage = async () => {
-    const element = document.getElementById('capture-area');
-    const toolbar = element?.querySelector('.z-30'); 
-    
-    if (!element) return;
-    
-    try {
-      // 1. 隱藏工具列
-      if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
+ ]);
 
-      // 2. 執行截圖 (需確保 npm install 成功)
-      const canvas = await html2canvas(element, {
-        useCORS: true,
-        backgroundColor: isDarkMode ? '#020617' : '#ffffff',
-        scale: 3,
-        logging: false,
-      });
-
-      // 3. 轉換圖片並下載
-      const image = canvas.toDataURL("image/png");
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `${scheduleName || '我的班表'}_${currentDate.getMonth() + 1}月.png`;
-      link.click();
-    } catch (err) {
-      console.error('圖片生成出錯:', err);
-      alert('請檢查是否已成功執行 npm install html2canvas');
-    } finally {
-      // 4. 無論成功或失敗，強制恢復顯示工具列
-      if (toolbar) toolbar.style.setProperty('display', 'flex', 'important');
-    }
-  };
+  const [areas, setAreas] = useState(['區域 A', '區域 AF', '區域 B']);
   const [areas, setAreas] = useState(['區域 A', '區域 AF', '區域 B']);
   const [newAreaInput, setNewAreaInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
