@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas';
 import './index.css';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, MapPin, ChevronLeft, ChevronRight, X, Check, Settings, Moon, Sun, Eraser, Share2, Trash2, BarChart3 } from 'lucide-react';
@@ -27,6 +28,29 @@ const OFF_SHIFT = {
 const DAYS_IN_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
 export default function App() {
+  // --- 這裡開始是新加的匯出功能 ---
+  const exportAsImage = async () => {
+    // 這裡的 'capture-area' 要跟下方的 id 一致
+    const element = document.getElementById('capture-area'); 
+    if (!element) return;
+    
+    try {
+      const canvas = await html2canvas(element, {
+        backgroundColor: '#000000', // 確保背景是黑色的
+        scale: 3, // 提高解析度，讓圖片更清晰
+        useCORS: true // 處理跨域圖片問題
+      });
+      
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = '班表.png';
+      link.click();
+    } catch (err) {
+      console.error('匯出失敗:', err);
+    }
+  };
+  // --- 匯出功能結束 ---
   const [step, setStep] = useState(0); 
   const [scheduleName, setScheduleName] = useState('');
   const [shifts, setShifts] = useState([
@@ -91,6 +115,15 @@ export default function App() {
         const item = schedule[key];
         stats[item.type] = (stats[item.type] || 0) + 1;
       }
+      const exportAsImage = async () => {
+    const element = document.getElementById('schedule-table');
+    if (!element) return;
+    const canvas = await html2canvas(element, { backgroundColor: '#000000', scale: 2 });
+    const image = canvas.toDataURL("image/png");
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = 'my-schedule.png';
+    link.click();
     });
     return stats;
   }, [schedule, currentDate]);
@@ -339,6 +372,11 @@ export default function App() {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex items-center justify-center font-sans transition-colors duration-700`}>
+      {/* 3. 在這裡加按鈕 */}
+      <button onClick={exportAsImage}>下載圖片</button>
+      {/* 4. 在這裡加 ID */}
+      <div id="capture-area" className="max-w-[420px] mx-auto bg-slate-900">
+         {/* ...你的課表內容... */}
       <style dangerouslySetInnerHTML={{__html: `.custom-scrollbar::-webkit-scrollbar { width: 0px; height: 0px; } .no-scrollbar::-webkit-scrollbar { display: none; }` }} />
       <div className={`w-full max-w-[420px] h-[100dvh] md:h-[850px] ${t.bg} md:rounded-[3.5rem] shadow-2xl overflow-hidden relative border-[10px] ${isDarkMode ? 'border-slate-900 ring-1 ring-white/10' : 'border-white ring-1 ring-black/5'} flex flex-col`}>
         {step < 4 ? renderOnboarding() : renderMainApp()}
