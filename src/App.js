@@ -383,21 +383,23 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex items-center justify-center font-sans transition-colors duration-700`}>
-      {/* 3. 在這裡加按鈕 */}
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex flex-col items-center justify-center p-4`}>
+      
+      {/* 3. 下載按鈕 */}
       <button 
-  onClick={exportAsImage} 
-  className="relative z-50 mb-4 px-4 py-2 bg-yellow-400 text-black font-bold rounded-lg"
->
-  📸 下載圖片
-</button>
-      {/* 4. 在這裡加 ID */}
-      <div id="capture-area" className="max-w-[420px] mx-auto bg-slate-900">
-         {/* ...你的課表內容... */}
-      <style dangerouslySetInnerHTML={{__html: `.custom-scrollbar::-webkit-scrollbar { width: 0px; height: 0px; } .no-scrollbar::-webkit-scrollbar { display: none; }` }} />
-      <div className={`w-full max-w-[420px] h-[100dvh] md:h-[850px] ${t.bg} md:rounded-[3.5rem] shadow-2xl overflow-hidden relative border-[10px] ${isDarkMode ? 'border-slate-900 ring-1 ring-white/10' : 'border-white ring-1 ring-black/5'} flex flex-col`}>
-        {step < 4 ? renderOnboarding() : renderMainApp()}
+        onClick={exportAsImage} 
+        className="relative z-50 mb-4 px-6 py-2 bg-yellow-400 text-black font-bold rounded-full shadow-lg active:scale-95 transition-transform"
+      >
+        📸 下載班表圖片
+      </button>
+
+      {/* 4. 截圖範圍：包含你的整個 App 內容 */}
+      <div id="capture-area" className="w-full flex justify-center">
+        <div className="w-full max-w-[420px] shadow-2xl overflow-hidden md:rounded-[3.5rem]">
+          {step < 4 ? renderOnboarding() : renderMainApp()}
+        </div>
       </div>
-    </div>
+
+    </div> // <--- 這是最後一個關閉標籤
   );
 }
