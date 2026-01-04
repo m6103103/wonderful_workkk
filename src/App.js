@@ -33,7 +33,7 @@ export default function App() {
     if (!element) return;
     try {
       if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
-      const canvas = await html2canvas(window.document.getElementById('capture-area'), {
+      const canvas = await html2canvas(element, {
         useCORS: true,
         scale: 3,
       });
@@ -56,7 +56,6 @@ export default function App() {
     { id: 'night', name: '大夜', time: '23:00 - 07:00', themeIdx: 2 },
  ]);
 
-  const [areas, setAreas] = useState(['區域 A', '區域 AF', '區域 B']);
   const [newAreaInput, setNewAreaInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
