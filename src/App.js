@@ -1,4 +1,3 @@
-import html2canvas from 'html2canvas';
 import './index.css';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, MapPin, ChevronLeft, ChevronRight, X, Check, Settings, Moon, Sun, Eraser, Share2, Trash2, BarChart3 } from 'lucide-react';
@@ -15,25 +14,6 @@ export default function App() {
   const [step, setStep] = useState(4);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeTheme, setActiveTheme] = useState(THEME_PALETTE[0]);
-
-  const exportAsImage = async () => {
-    const element = document.getElementById('capture-area');
-    if (!element) return;
-    try {
-      const canvas = await html2canvas(element, {
-        backgroundColor: isDarkMode ? '#000000' : '#f8fafc',
-        scale: 3,
-        useCORS: true
-      });
-      const image = canvas.toDataURL("image/png");
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `${currentDate.getMonth() + 1}月班表.png`;
-      link.click();
-    } catch (err) {
-      console.error('匯出失敗:', err);
-    }
-  };
 
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
@@ -52,8 +32,20 @@ export default function App() {
   }, [schedule, currentDate]);
 
   const renderMainApp = () => {
-    const t = isDarkMode ? { bg: 'bg-slate-950', text: 'text-slate-100', textSub: 'text-slate-400', card: 'bg-slate-900/50', border: 'border-slate-800' } 
-                         : { bg: 'bg-white', text: 'text-slate-900', textSub: 'text-slate-500', card: 'bg-slate-50', border: 'border-slate-200' };
+    const t = isDarkMode ? {
+      bg: 'bg-slate-950',
+      text: 'text-slate-100',
+      textSub: 'text-slate-400',
+      card: 'bg-slate-900/50',
+      border: 'border-slate-800'
+    } : {
+      bg: 'bg-white',
+      text: 'text-slate-900',
+      textSub: 'text-slate-500',
+      card: 'bg-slate-50',
+      border: 'border-slate-200'
+    };
+
     const days = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate);
     const blanks = Array(firstDay).fill(null);
@@ -61,9 +53,10 @@ export default function App() {
 
     return (
       <div className={`flex flex-col h-full ${t.bg} ${t.text}`}>
+        {/* Header */}
         <div className="p-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black italic tracking-tighter">MY SHIFT</h1>
+            <h1 className="text-2xl font-black tracking-tighter italic">MY SHIFT</h1>
             <p className={t.textSub}>{currentDate.getFullYear()} / {currentDate.getMonth() + 1}月</p>
           </div>
           <div className="flex gap-2">
@@ -72,47 +65,63 @@ export default function App() {
           </div>
         </div>
 
+        {/* Calendar Grid */}
         <div className="flex-1 overflow-y-auto px-4">
           <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold opacity-50">
             {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => <div key={d}>{d}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {blanks.concat(monthDays).map((day, i) => {
-              if (!day) return <div key={`b-${i}`} className="aspect-square"></div>;
+              if (!day) return <div key={`blank-${i}`} className="aspect-square"></div>;
               const dateKey = formatDateKey(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
               const shift = schedule[dateKey];
+              
               return (
                 <div 
-                  key={day} 
+                  key={day}
                   onClick={() => {
                     const types = ['早', '中', '晚', '休'];
                     const currentIdx = shift ? types.indexOf(shift.type) : -1;
                     const nextType = types[currentIdx + 1];
                     const newSched = { ...schedule };
-                    if (nextType) newSched[dateKey] = { type: nextType }; else delete newSched[dateKey];
+                    if (nextType) {
+                      newSched[dateKey] = { type: nextType };
+                    } else {
+                      delete newSched[dateKey];
+                    }
                     setSchedule(newSched);
                   }}
-                  className={`aspect-square rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all ${shift ? 'bg-yellow-400/20 border-yellow-400' : t.border}`}
+                  className={`aspect-square rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all ${
+                    shift ? `${activeTheme.bg} ${activeTheme.border} ${activeTheme.glow}` : t.border
+                  }`}
                 >
                   <span className="text-[10px] opacity-50">{day}</span>
-                  {shift && <span className="font-bold text-yellow-400">{shift.type}</span>}
+                  {shift && <span className={`font-bold ${activeTheme.color}`}>{shift.type}</span>}
                 </div>
               );
             })}
           </div>
+
+          {/* Stats Bar */}
           <div className={`mt-6 p-4 rounded-3xl ${t.card} border ${t.border}`}>
-             <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><BarChart3 size={16}/> 本月統計</h3>
-             <div className="flex justify-around text-center">
-                {['早', '中', '晚', '休'].map(type => (
-                  <div key={type}><p className="text-[10px] opacity-50">{type}班</p><p className="font-bold">{monthStats[type] || 0}</p></div>
-                ))}
-             </div>
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><BarChart3 size={16}/> 本月統計</h3>
+            <div className="flex justify-around text-center">
+              {['早', '中', '晚', '休'].map(type => (
+                <div key={type}>
+                  <p className="text-[10px] opacity-50">{type}班</p>
+                  <p className="font-bold">{monthStats[type] || 0}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
+        {/* Bottom Nav */}
         <div className="p-4 border-t border-slate-800/30 flex items-center justify-between">
-          <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-full ${t.card}`}>{isDarkMode ? <Sun size={18}/> : <Moon size={18}/>}</button>
-          <div className="w-12 h-1.5 bg-slate-800 rounded-full"></div>
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-full ${t.card}`}>
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <div className={`w-12 h-1.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'} rounded-full`}></div>
           <button onClick={() => setStep(3)} className={t.textSub}><Settings size={18} /></button>
         </div>
       </div>
@@ -120,12 +129,9 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex flex-col items-center justify-center p-4`}>
-      <button onClick={exportAsImage} className="relative z-50 mb-6 px-6 py-2 bg-yellow-400 text-black font-bold rounded-full shadow-lg active:scale-95">📸 下載班表圖片</button>
-      <div id="capture-area" className="w-full flex justify-center">
-        <div className="w-full max-w-[420px] h-[780px] shadow-2xl overflow-hidden md:rounded-[3rem] border border-slate-800/50">
-          {step === 4 ? renderMainApp() : <div className="h-full flex items-center justify-center bg-slate-900 text-white"><button onClick={() => setStep(4)}>進入班表</button></div>}
-        </div>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex items-center justify-center p-4`}>
+      <div className="w-full max-w-[420px] h-[780px] shadow-2xl overflow-hidden md:rounded-[3rem] border border-slate-800/50">
+        {renderMainApp()}
       </div>
     </div>
   );
