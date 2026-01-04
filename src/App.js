@@ -42,23 +42,31 @@ export default function App() {
       // 1. 隱藏工具列
       if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
 
+      // 加入 100 毫秒延遲，給瀏覽器時間隱藏工具列
+  await new Promise(resolve => setTimeout(resolve, 100));
+
       // 2. 執行截圖 (加上 logging 幫助排錯)
       const canvas = await html2canvas(element, {
         useCORS: true,
         scale: 2, // 先降回 2 倍看是否因為手機記憶體不足卡住
         logging: true,
-        allowTaint: true
+        // 增加以下兩個設定，提升 PWA 模式相容性
+    allowTaint: false,
+    foreignObjectRendering: false
       });
 
       // 3. 下載
       const image = canvas.toDataURL("image/png");
+      const newWindow = window.open();
+      if (newWindow) {
+      newWindow.document.write(`<img src="${image}" style="width:100%" />`);
+      alert("圖片已生成，請長按圖片儲存至相簿");
+    } else {
+      // 如果被阻擋視窗，則退回原下載方式
       const link = document.createElement('a');
       link.href = image;
-      link.download = '我的班表_${new Date().getTime()}.png';
+      link.download = 'schedule.png';
       link.click();
-    } catch (err) {
-      console.error('截圖錯誤詳細資訊:', err);
-      alert('圖片生成失敗: ' + err.message);
     } finally {
       // 4. 強制恢復工具列
       if (toolbar) toolbar.style.setProperty('display', 'flex', 'important');
