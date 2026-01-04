@@ -326,7 +326,7 @@ export default function App() {
            <div className="flex justify-between items-center opacity-60">
              <div className="flex gap-4">
                 <button className={`text-[10px] font-bold ${t.textSub} flex items-center gap-1`}><Share2 size={12}/> 分享</button>
-                <button onClick={() => { if(confirm('確定要清空本月班表嗎？')) { const ns = {...schedule}; Object.keys(ns).forEach(k => { if(new Date(k).getMonth() === currentDate.getMonth()) delete ns[k]; }); setSchedule(ns); }}} className={`text-[10px] font-bold text-red-400 flex items-center gap-1`}><Trash2 size={12}/> 清空</button>
+                <button onClick={() => { if(window.confirm('確定要清空本月班表嗎？')) { const ns = {...schedule}; Object.keys(ns).forEach(k => { if(new Date(k).getMonth() === currentDate.getMonth()) delete ns[k]; }); setSchedule(ns); }}} className={`text-[10px] font-bold text-red-400 flex items-center gap-1`}><Trash2 size={12}/> 清空</button>
              </div>
              <div className={`w-12 h-1.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'} rounded-full`}></div>
              <button onClick={() => setStep(3)} className={t.textSub}><Settings size={16}/></button>
