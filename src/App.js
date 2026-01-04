@@ -35,17 +35,17 @@ export default function App() {
     { id: 'night', name: '大夜', time: '23:00 - 07:00', themeIdx: 2 },
   ]);
   const handleExportImage = async () => {
+    const handleExportImage = async () => {
     const element = document.getElementById('capture-area');
-    // 透過 ID 抓取到的元素中尋找 z-30 (工具列)
     const toolbar = element?.querySelector('.z-30'); 
     
     if (!element) return;
     
     try {
-      // 1. 隱藏工具列 (使用 !important 確保覆蓋樣式)
+      // 1. 隱藏工具列
       if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
 
-      // 2. 執行截圖
+      // 2. 執行截圖 (需確保 npm install 成功)
       const canvas = await html2canvas(element, {
         useCORS: true,
         backgroundColor: isDarkMode ? '#020617' : '#ffffff',
@@ -61,9 +61,9 @@ export default function App() {
       link.click();
     } catch (err) {
       console.error('圖片生成出錯:', err);
-      alert('圖片生成失敗，請確認已執行過 npm install html2canvas');
+      alert('請檢查是否已成功執行 npm install html2canvas');
     } finally {
-      // 4. 【關鍵修正】不論成功或失敗，強制恢復顯示工具列
+      // 4. 無論成功或失敗，強制恢復顯示工具列
       if (toolbar) toolbar.style.setProperty('display', 'flex', 'important');
     }
   };
