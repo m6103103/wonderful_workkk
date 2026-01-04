@@ -3,22 +3,22 @@ import './index.css';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, MapPin, ChevronLeft, ChevronRight, X, Check, Settings, Moon, Sun, Eraser, Share2, Trash2, BarChart3 } from 'lucide-react';
 
-// ... (此處保留你原本的 THEME_PALETTE 和其他常數設定) ...
+const THEME_PALETTE = [
+  { id: 'theme-1', color: 'text-yellow-400', border: 'border-yellow-400', bg: 'bg-yellow-400/10', glow: 'shadow-[0_0_15px_rgba(250,204,21,0.3)]', lightColor: 'text-white', lightBorder: 'border-yellow-500', lightBg: 'bg-yellow-500' },
+  { id: 'theme-2', color: 'text-cyan-400', border: 'border-cyan-400', bg: 'bg-cyan-400/10', glow: 'shadow-[0_0_15px_rgba(34,211,238,0.3)]', lightColor: 'text-white', lightBorder: 'border-cyan-500', lightBg: 'bg-cyan-500' },
+  { id: 'theme-3', color: 'text-fuchsia-500', border: 'border-fuchsia-500', bg: 'bg-fuchsia-500/10', glow: 'shadow-[0_0_15px_rgba(217,70,239,0.3)]', lightColor: 'text-white', lightBorder: 'border-fuchsia-500', lightBg: 'bg-fuchsia-500' }
+];
 
 export default function App() {
-  // 1. 狀態定義 (保持你原本的設定)
   const [currentDate, setCurrentDate] = useState(new Date());
   const [schedule, setSchedule] = useState({});
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(4);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [activeTheme, setActiveTheme] = useState(THEME_PALETTE[0]);
 
-  // 2. 下載圖片函式 (確保獨立且正確)
   const exportAsImage = async () => {
     const element = document.getElementById('capture-area');
-    if (!element) {
-      alert("找不到截圖區域");
-      return;
-    }
+    if (!element) return;
     try {
       const canvas = await html2canvas(element, {
         backgroundColor: isDarkMode ? '#000000' : '#f8fafc',
@@ -28,52 +28,105 @@ export default function App() {
       const image = canvas.toDataURL("image/png");
       const link = document.createElement('a');
       link.href = image;
-      link.download = '我的班表.png';
+      link.download = `${currentDate.getMonth() + 1}月班表.png`;
       link.click();
     } catch (err) {
       console.error('匯出失敗:', err);
     }
   };
 
-  // 3. 渲染邏輯 (修正了 renderMainApp 結尾的錯誤)
-  const renderOnboarding = () => { /* 你原本的 renderOnboarding 邏輯 */ };
+  const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  const formatDateKey = (date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+
+  const monthStats = useMemo(() => {
+    const stats = {};
+    Object.keys(schedule).forEach(key => {
+      const date = new Date(key);
+      if (date.getMonth() === currentDate.getMonth() && date.getFullYear() === currentDate.getFullYear()) {
+        const item = schedule[key];
+        stats[item.type] = (stats[item.type] || 0) + 1;
+      }
+    });
+    return stats;
+  }, [schedule, currentDate]);
 
   const renderMainApp = () => {
-    const t = isDarkMode ? { bg: 'bg-slate-950', text: 'text-slate-100' } : { bg: 'bg-white', text: 'text-slate-900' };
+    const t = isDarkMode ? { bg: 'bg-slate-950', text: 'text-slate-100', textSub: 'text-slate-400', card: 'bg-slate-900/50', border: 'border-slate-800' } 
+                         : { bg: 'bg-white', text: 'text-slate-900', textSub: 'text-slate-500', card: 'bg-slate-50', border: 'border-slate-200' };
+    const days = getDaysInMonth(currentDate);
+    const firstDay = getFirstDayOfMonth(currentDate);
+    const blanks = Array(firstDay).fill(null);
+    const monthDays = Array.from({ length: days }, (_, i) => i + 1);
+
     return (
       <div className={`flex flex-col h-full ${t.bg} ${t.text}`}>
-        {/* ... 你原本的班表內容 ... */}
-        <div className="p-4 border-t border-slate-800/50 flex items-center justify-between">
-          <div className="flex gap-4">
-            <button onClick={() => {/*分享邏輯*/}} className="text-[10px] flex items-center gap-1"><Share2 size={12} /> 分享</button>
-            <button onClick={() => {/*清空邏輯*/}} className="text-[10px] text-red-400 flex items-center gap-1"><Trash2 size={12} /> 清空</button>
+        <div className="p-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-black italic tracking-tighter">MY SHIFT</h1>
+            <p className={t.textSub}>{currentDate.getFullYear()} / {currentDate.getMonth() + 1}月</p>
           </div>
-          <div className={`w-12 h-1.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'} rounded-full`}></div>
-          <button onClick={() => setStep(3)}><Settings size={16} /></button>
+          <div className="flex gap-2">
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() - 1)))} className={`p-2 rounded-full ${t.card}`}><ChevronLeft size={20}/></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + 1)))} className={`p-2 rounded-full ${t.card}`}><ChevronRight size={20}/></button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4">
+          <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold opacity-50">
+            {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => <div key={d}>{d}</div>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {blanks.concat(monthDays).map((day, i) => {
+              if (!day) return <div key={`b-${i}`} className="aspect-square"></div>;
+              const dateKey = formatDateKey(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+              const shift = schedule[dateKey];
+              return (
+                <div 
+                  key={day} 
+                  onClick={() => {
+                    const types = ['早', '中', '晚', '休'];
+                    const currentIdx = shift ? types.indexOf(shift.type) : -1;
+                    const nextType = types[currentIdx + 1];
+                    const newSched = { ...schedule };
+                    if (nextType) newSched[dateKey] = { type: nextType }; else delete newSched[dateKey];
+                    setSchedule(newSched);
+                  }}
+                  className={`aspect-square rounded-xl border flex flex-col items-center justify-center cursor-pointer transition-all ${shift ? 'bg-yellow-400/20 border-yellow-400' : t.border}`}
+                >
+                  <span className="text-[10px] opacity-50">{day}</span>
+                  {shift && <span className="font-bold text-yellow-400">{shift.type}</span>}
+                </div>
+              );
+            })}
+          </div>
+          <div className={`mt-6 p-4 rounded-3xl ${t.card} border ${t.border}`}>
+             <h3 className="text-sm font-bold mb-3 flex items-center gap-2"><BarChart3 size={16}/> 本月統計</h3>
+             <div className="flex justify-around text-center">
+                {['早', '中', '晚', '休'].map(type => (
+                  <div key={type}><p className="text-[10px] opacity-50">{type}班</p><p className="font-bold">{monthStats[type] || 0}</p></div>
+                ))}
+             </div>
+          </div>
+        </div>
+
+        <div className="p-4 border-t border-slate-800/30 flex items-center justify-between">
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className={`p-2 rounded-full ${t.card}`}>{isDarkMode ? <Sun size={18}/> : <Moon size={18}/>}</button>
+          <div className="w-12 h-1.5 bg-slate-800 rounded-full"></div>
+          <button onClick={() => setStep(3)} className={t.textSub}><Settings size={18} /></button>
         </div>
       </div>
     );
-  }; // <--- 這裡已修正：正確結束 renderMainApp 函式
+  };
 
-  // 4. 主要返回區塊 (修正了 div 嵌套與 ID 設定)
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-slate-50'} flex flex-col items-center justify-center p-4`}>
-      
-      {/* 📸 下載按鈕 */}
-      <button 
-        onClick={exportAsImage} 
-        className="relative z-50 mb-4 px-6 py-2 bg-yellow-400 text-black font-bold rounded-full shadow-lg active:scale-95 transition-transform"
-      >
-        📸 下載班表圖片
-      </button>
-
-      {/* 截圖目標區域 */}
+      <button onClick={exportAsImage} className="relative z-50 mb-6 px-6 py-2 bg-yellow-400 text-black font-bold rounded-full shadow-lg active:scale-95">📸 下載班表圖片</button>
       <div id="capture-area" className="w-full flex justify-center">
-        <div className="w-full max-w-[420px] shadow-2xl overflow-hidden md:rounded-[3.5rem]">
-          {step < 4 ? renderOnboarding() : renderMainApp()}
+        <div className="w-full max-w-[420px] h-[780px] shadow-2xl overflow-hidden md:rounded-[3rem] border border-slate-800/50">
+          {step === 4 ? renderMainApp() : <div className="h-full flex items-center justify-center bg-slate-900 text-white"><button onClick={() => setStep(4)}>進入班表</button></div>}
         </div>
       </div>
-
     </div>
   );
-} // <--- 整個 App 的結尾
+}
