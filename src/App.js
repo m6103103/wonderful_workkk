@@ -1,3 +1,4 @@
+import './index.css';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, MapPin, ChevronLeft, ChevronRight, X, Check, Settings, Moon, Sun, Eraser, Share2, Trash2, BarChart3 } from 'lucide-react';
 
