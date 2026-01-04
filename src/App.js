@@ -1,3 +1,4 @@
+import html2canvas from 'html2canvas';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Clock, MapPin, ChevronLeft, ChevronRight, X, Check, Settings, Moon, Sun, Eraser, Share2, Trash2, BarChart3 } from 'lucide-react';
 
@@ -33,6 +34,32 @@ export default function App() {
     { id: 'mid', name: '小夜', time: '15:00 - 23:00', themeIdx: 1 },
     { id: 'night', name: '大夜', time: '23:00 - 07:00', themeIdx: 2 },
   ]);
+  const handleExportImage = async () => {
+    const element = document.getElementById('capture-area');
+    if (!element) return;
+    try {
+      // 擷取前暫時隱藏底部工具列
+      const toolbar = element.querySelector('.z-30');
+      if (toolbar) toolbar.style.display = 'none';
+
+      const canvas = await html2canvas(element, {
+        useCORS: true,
+        backgroundColor: isDarkMode ? '#020617' : '#ffffff',
+        scale: 3, // 高清匯出
+        logging: false,
+      });
+
+      if (toolbar) toolbar.style.display = 'block';
+
+      const image = canvas.toDataURL("image/png");
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `${scheduleName || '我的班表'}_${currentDate.getMonth() + 1}月.png`;
+      link.click();
+    } catch (err) {
+      console.error('匯出失敗:', err);
+    }
+  };
   const [areas, setAreas] = useState(['區域 A', '區域 AF', '區域 B']);
   const [newAreaInput, setNewAreaInput] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -193,7 +220,7 @@ export default function App() {
     const todayStr = formatDateKey(new Date());
 
     return (
-      <div className={`flex flex-col h-full ${t.bg} relative transition-colors`}>
+      <div id="capture-area" className={`flex flex-col h-full ${t.bg} relative transition-colors`}>
         {/* 背景網格 */}
         <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: `linear-gradient(${t.gridColor} 1px, transparent 1px), linear-gradient(90deg, ${t.gridColor} 1px, transparent 1px)`, backgroundSize: '40px 40px' }}></div>
 
@@ -207,7 +234,7 @@ export default function App() {
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setShowStats(!showStats)} className={`${showStats ? 'text-cyan-400' : t.textMuted} hover:${t.text}`}><BarChart3 size={18} /></button>
-                <button className={`${t.textMuted} hover:${t.text}`}><Share2 size={18} /></button>
+                <button onClick={handleExportImage} className={`${t.textMuted} hover:${t.text}`}><Share2 size={18} /></button>
               </div>
             </div>
 
@@ -325,7 +352,7 @@ export default function App() {
 
            <div className="flex justify-between items-center opacity-60">
              <div className="flex gap-4">
-                <button className={`text-[10px] font-bold ${t.textSub} flex items-center gap-1`}><Share2 size={12}/> 分享</button>
+                <button onClick={handleExportImage} className={`text-[10px] font-bold ${t.textSub} flex items-center gap-1`}><Share2 size={12}/> 分享</button>
                 <button onClick={() => { if(window.confirm('確定要清空本月班表嗎？')) { const ns = {...schedule}; Object.keys(ns).forEach(k => { if(new Date(k).getMonth() === currentDate.getMonth()) delete ns[k]; }); setSchedule(ns); }}} className={`text-[10px] font-bold text-red-400 flex items-center gap-1`}><Trash2 size={12}/> 清空</button>
              </div>
              <div className={`w-12 h-1.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200'} rounded-full`}></div>
