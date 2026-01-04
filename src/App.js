@@ -36,28 +36,35 @@ export default function App() {
   ]);
   const handleExportImage = async () => {
     const element = document.getElementById('capture-area');
+    // 透過 ID 抓取到的元素中尋找 z-30 (工具列)
+    const toolbar = element?.querySelector('.z-30'); 
+    
     if (!element) return;
+    
     try {
-      // 擷取前暫時隱藏底部工具列
-      const toolbar = element.querySelector('.z-30');
-      if (toolbar) toolbar.style.display = 'none';
+      // 1. 隱藏工具列 (使用 !important 確保覆蓋樣式)
+      if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
 
+      // 2. 執行截圖
       const canvas = await html2canvas(element, {
         useCORS: true,
         backgroundColor: isDarkMode ? '#020617' : '#ffffff',
-        scale: 3, // 高清匯出
+        scale: 3,
         logging: false,
       });
 
-      if (toolbar) toolbar.style.display = 'block';
-
+      // 3. 轉換圖片並下載
       const image = canvas.toDataURL("image/png");
       const link = document.createElement('a');
       link.href = image;
       link.download = `${scheduleName || '我的班表'}_${currentDate.getMonth() + 1}月.png`;
       link.click();
     } catch (err) {
-      console.error('匯出失敗:', err);
+      console.error('圖片生成出錯:', err);
+      alert('圖片生成失敗，請確認已執行過 npm install html2canvas');
+    } finally {
+      // 4. 【關鍵修正】不論成功或失敗，強制恢復顯示工具列
+      if (toolbar) toolbar.style.setProperty('display', 'flex', 'important');
     }
   };
   const [areas, setAreas] = useState(['區域 A', '區域 AF', '區域 B']);
