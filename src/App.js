@@ -28,50 +28,41 @@ const DAYS_IN_WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
 export default function App() {
   const handleExportImage = async () => {
-    // 改用更保險的抓取方式
     const element = document.getElementById('capture-area');
-    if (!element) {
-      alert("找不到截圖區域，請確認 <div id='capture-area'> 是否存在");
-      return;
-    }
-    
-    // 精確抓取工具列 (z-30 是您的工具列 class)
-    const toolbar = element.querySelector('.z-30'); 
+    if (!element) return;
+    const toolbar = element.querySelector('.z-30');
     
     try {
-      // 1. 隱藏工具列
       if (toolbar) toolbar.style.setProperty('display', 'none', 'important');
+      
+      // 給瀏覽器一點時間處理渲染
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      // 加入 100 毫秒延遲，給瀏覽器時間隱藏工具列
-  await new Promise(resolve => setTimeout(resolve, 100));
-
-      // 2. 執行截圖 (加上 logging 幫助排錯)
       const canvas = await html2canvas(element, {
         useCORS: true,
-        scale: 2, // 先降回 2 倍看是否因為手機記憶體不足卡住
-        logging: true,
-        // 增加以下兩個設定，提升 PWA 模式相容性
-    allowTaint: false,
-    foreignObjectRendering: false
+        scale: 2,
+        backgroundColor: isDarkMode ? '#020617' : '#ffffff', // 強制指定一個基本顏色避開 oklch 報錯
+        onclone: (clonedDoc) => {
+          // 這是關鍵：把複製出來準備截圖的內容中，所有可能導致報錯的顏色暫時替換
+          const el = clonedDoc.getElementById('capture-area');
+          if (el) el.style.color = isDarkMode ? 'white' : 'black';
+        }
       });
 
-      // 3. 下載
       const image = canvas.toDataURL("image/png");
-      const newWindow = window.open();
-      if (newWindow) {
-      newWindow.document.write(`<img src="${image}" style="width:100%" />`);
-      alert("圖片已生成，請長按圖片儲存至相簿");
-    } else {
-      // 如果被阻擋視窗，則退回原下載方式
       const link = document.createElement('a');
       link.href = image;
-      link.download = 'schedule.png';
+      link.download = `我的班表.png`;
       link.click();
+      
+    } catch (err) {
+      console.error(err);
+      alert('圖片生成失敗，建議改用電腦瀏覽器匯出');
     } finally {
-      // 4. 強制恢復工具列
+      // 修正：確保這裡有正確的結尾，讓工具列一定會回來
       if (toolbar) toolbar.style.setProperty('display', 'flex', 'important');
     }
-  };
+  }; // <--- 請確認這一行後面有一個分號，且括號完整
   const [step, setStep] = useState(0); 
   const [scheduleName, setScheduleName] = useState('');
   const [shifts, setShifts] = useState([
